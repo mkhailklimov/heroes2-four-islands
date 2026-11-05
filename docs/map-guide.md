@@ -17,6 +17,12 @@
 
 The full list of objects with coordinates is in [objects.md](objects.md). It is regenerated with the map.
 
+## Story
+
+On day 1 every player sees this message (it is also the scenario description):
+
+> The Blue Sea was home to peaceful lands: six free countries lived and prospered. But the central island has fallen to an invading dragon horde. Conquer the central island, or the dragons will crush you!
+
 ## Idea
 
 Four factions each start on their own corner island. No land path leads off an island. To leave, you take the neutral port village, upgrade it to a castle and build a shipyard. Each island lacks a mine for its own level-6 resource. That resource comes from the windmill, the market, or the centre island. The centre island has two neutral castles, the missing mines and a dragon fortress.
@@ -43,7 +49,7 @@ Four factions each start on their own corner island. No land path leads off an i
 | Free dwellings | Warlock: Cave + Goblin Hut; Knight: Peasant Hut + Archer House; Sorceress: Tree House + Dwarf Cottage; Wizard: Halfling Hole + Dwarf Cottage. |
 | Mines | Sawmill, ore mine, gold mine (8 Ogres), two "foreign" rare mines (10 Wolves, 6 Griffins). |
 | Windmill + water wheel | The windmill is the random chance at your own rare resource. |
-| Witch hut | 1 |
+| Visitable buildings | 1 Witch Hut, 1 Gazebo, 1 Tree of Knowledge, 2 Obelisks. HoMM2 has no "academy", so the Tree of Knowledge (a free level) stands in for it. Gazebo and Tree are drawn for grass/dirt, so on snow and lava they stand on a small dirt patch. |
 | Treasure | 4 wood piles, 4 ore piles, 1 gold pile, 3 treasure chests, 1 treasure-class artifact. |
 | Prison | Super-hero, guarded by 6 Trolls (see below). |
 | Port village | Neutral, on the coast facing the centre, with a garrison of 12 Orcs/Swordsmen + 10 Elves. Water lies directly below its entrance, so a shipyard can be built once it is a castle. |
@@ -84,9 +90,23 @@ All 4 skills are at Expert level. They belong to the hero and can't be passed on
 - **Orcrest:** neutral Barbarian castle (west). Garrison 30 Orcs, 15 Wolves, 10 Ogres, 6 Trolls, 3 Cyclopes.
 - **Gravemoor:** neutral Necromancer castle (east). Garrison 40 Skeletons, 20 Zombies, 10 Mummies, 6 Vampires, 4 Liches.
 - **Dragonhold** (72,72): neutral Warlock castle with no hero and **5 × 20 Black Dragons**. The garrison does not regrow, so losses stay.
+- **Ring of volcanoes** around Dragonhold, on lava ground. There are two gates only: **north, guarded by 100 Red Dragons**, and **south, guarded by 100 Green Dragons**. The generator checks that the ring has no other way in.
+- **Inside the ring:** Dragonhold, 2 major artifacts behind 6 Titans and 6 Bone Dragons, a Gazebo and a Tree of Knowledge.
+- **Outside the ring:** 1 Witch Hut and 2 Obelisks (one in the swamp, one in the desert).
 - **Missing resources:** 2 mines each of crystal, mercury (alchemist lab), gems and sulfur. They are guarded by Green Dragons, Hydras, Giants and Genies (4–6 each).
-- **Next to Dragonhold:** 2 major artifacts behind 6 Titans and 6 Bone Dragons.
 - **Other artifacts:** 6 more (major and minor), plus 6 roaming stacks of 3 Red Dragons, Titans or Bone Dragons.
+
+## Weekly dragon raids
+
+The original game cannot create monsters during play: a timed event can only show a message and give or take resources. So the weekly hordes are dragon **raids**. They hit the 4 players only, never the neutral castles.
+
+| Day | Raid | Loss |
+|---|---|---|
+| 8, 29, 50… | Green dragons | 5 wood, 5 ore, 1000 gold |
+| 15, 36, 57… | Red dragons | 5 wood, 5 ore, 2 of each rare resource, 2000 gold |
+| 22, 43, 64… | Black dragons | 10 wood, 10 ore, 3 of each rare resource, 3000 gold |
+
+The cycle repeats every 3 weeks. Raids can't stop when the centre falls, because events have no conditions.
 
 ## Sea
 
@@ -100,4 +120,5 @@ All 4 skills are at Expert level. They belong to the hero and can't be passed on
 - **Warlock ground:** lava. The original request said snow, which is still to be confirmed.
 - **Bottles:** none yet. They need a message text, which the generator doesn't write.
 - **Decoration:** sparse, and some placements may look odd. Polishing in the editor is expected.
+- **Weekly raids:** a stand-in for weekly dragon spawns, which the engine can't do. The alternative under discussion is a 5th computer player owning Dragonhold.
 - **Coordinates:** [objects.md](objects.md) gives anchors (the bottom-right tile of each object), not entrances.

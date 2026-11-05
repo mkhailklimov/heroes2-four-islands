@@ -50,6 +50,7 @@ class Map:
         self.cells = [Cell() for _ in range(size * size)]
         self.link = 0
         self.extra_records = [None]  # map-extra records (towns, heroes...), index 0 unused
+        self.time_events = []  # extra-record indices of time events (header[419])
         self.rng = random.Random(seed)
 
     def cell(self, x, y):
@@ -203,6 +204,19 @@ class Map:
         cell.meta = len(self.extra_records)
         self.extra_records.append(bytes(data))
 
+    def add_time_event(self, message, first_day, repeat=0, colors=(0, 1, 2, 3, 4, 5), resources=None,
+                       human=True, computer=True):
+        """A time event (EventExtra, gameTypes.h): on `first_day` and every `repeat` days after,
+        each listed colour gets `resources` (wood, mercury, ore, sulfur, crystal, gems, gold; may be
+        negative) and the message."""
+        res = list(resources or [0] * 7)
+        data = struct.pack("<B7ihBBHHBHHB6B", 0, *res, -1, int(computer), 0, first_day, repeat, 1, 0, 0,
+                           int(human), *[1 if c in colors else 0 for c in range(6)])
+        assert len(data) == 49
+        data += message.encode("cp1252") + b"\0"
+        self.time_events.append(len(self.extra_records))
+        self.extra_records.append(data)
+
     # ---- UpdateTriggers: coasts and shore flags
     def can_be_coast(self, x, y):
         if not self.inside(x, y):
@@ -330,6 +344,8 @@ class Map:
             pool.append(struct.pack("<HBBBBBII", 0xFFFF, 0, NONE, 0, 0, NONE, 0, 0))
         out = bytearray(header)
         assert len(out) == 420
+        out[418] = 0
+        out[419] = len(self.time_events)
         out += struct.pack("<II", n, n)
         for cb in cell_bytes:
             out += cb
@@ -375,7 +391,9 @@ class Map:
             out += m
         out += bytes([0xFF, 0xFF, 0xFF]) * (144 - len(mines))
         out += bytes([max(1, obelisks)])
-        # rumour / time event indices: none (header counts are 0)
+        # rumour indices (none), then time event indices
+        for idx in self.time_events:
+            out += struct.pack("<H", idx)
         out += struct.pack("<I", len(self.extra_records))  # i32 m_extraCount
         for rec in self.extra_records[1:]:
             out += struct.pack("<H", len(rec)) + rec

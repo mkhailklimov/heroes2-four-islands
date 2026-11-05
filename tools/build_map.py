@@ -28,6 +28,21 @@ WATER_WHEEL_ANY = 775
 PEASANT_HUT, ARCHER_HOUSE, DWARF_COTTAGE, TREE_HOUSE, HALFLING_HOLE_DIRT, CAVE_SNOW, GOBLIN_HUT = 746, 510, 512, 760, 701, 516, 511
 JAIL = 798
 WITCH_HUT = 558
+GAZEBO, TREE_OF_KNOWLEDGE = 748, 762
+OBELISK = {GRASS: 514, SNOW: 550, SWAMP: 598, LAVA: 615, DESERT: 655, DIRT: 709}
+RING_OBSTACLES = [57, 58, 59, 60, 61, 62, 600, 601, 602, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 619, 620, 621]
+RING_FILL = [126, 127]  # one-tile blockers
+# volcano ring around Dragonhold: centre, band radii, gate half-width
+RC = (70, 70)
+RING_IN, RING_OUT = 7.5, 10.0
+
+
+def ring_d(x, y):
+    return math.hypot(x - RC[0], y - RC[1])
+
+
+def in_gate(x, y):
+    return abs(x - RC[0]) <= 1
 WHIRLPOOL, MAGELLAN, FLOTSAM, SEA_CHEST, SURVIVOR, BUOY, LIGHTHOUSE = 457, 448, 447, 445, 451, 456, 773
 OBS_TOWER = 787
 HUT_OF_MAGI, EYE_OF_MAGI = BY_ID[K["OVERLAY_HUT_OF_MAGI_SITE"]], BY_ID[K["OVERLAY_EYE_OF_MAGI_SITE"]]
@@ -153,11 +168,14 @@ def build_ground():
         for x in range(N):
             if fc(x, y):
                 g[y * N + x] = SWAMP if x < 72 else DESERT
-    # dirt plateau under the boss castle
-    for y in range(66, 79):
-        for x in range(65, 80):
-            if math.hypot(x - 72, (y - 72) * 1.2) <= 6.5:
+    # dirt plateau under the boss castle, inside a ring of lava (volcanoes are placed on it later)
+    for y in range(RC[1] - 12, RC[1] + 13):
+        for x in range(RC[0] - 12, RC[0] + 13):
+            d = ring_d(x, y)
+            if d < RING_IN:
                 g[y * N + x] = DIRT
+            elif d <= RING_OUT + 0.6:
+                g[y * N + x] = LAVA
     return g
 
 
@@ -262,6 +280,29 @@ class Builder:
                     return cell, (x, y)
         raise RuntimeError(f"no room for {label or ti} near {ax},{ay}")
 
+    def place_on_dirt(self, ti, ax, ay, search=6, label=""):
+        """Place an object drawn for grass/dirt; on other ground, repaint a small dirt patch under it."""
+        cell, (x, y) = self.place(ti, ax, ay, search=search, label=label)
+        gr = self.ground(x, y)
+        if gr in (GRASS, DIRT):
+            return cell, (x, y)
+        area = [(xx, yy) for yy in range(y - 3, y + 3) for xx in range(x - 4, x + 2)]
+        if any(self.ground(xx, yy) == WATER for xx in range(x - 6, x + 4) for yy in range(y - 5, y + 5)):
+            return cell, (x, y)
+        t = self.ter
+        for xx, yy in area:
+            i = yy * N + xx
+            if t.ground(i) == gr:
+                t.set(i, START[DIRT] + 16 + rng.randrange(7), False, False)
+                t.no_embedded.add(i)
+        zone = [yy * N + xx for yy in range(y - 5, y + 5) for xx in range(x - 6, x + 4)]
+        t.update_area(zone)
+        t.update_area(zone)
+        for i in zone:
+            c = self.m.cells[i]
+            c.terrain, c.flags = t.idx[i], t.flags[i]
+        return cell, (x, y)
+
     def monster(self, mtype, count, ax, ay, search=3, label="guard"):
         cell, pos = self.place(MONSTER0 + mtype, ax, ay, search=search, reserve_front=False, label=label)
         cell.meta = count
@@ -354,6 +395,10 @@ def build():
             _, p = b.place(MINE_BASE[gr] + ORE, *local(isl, -14, -12), search=6, label="ore mine 2")
             b.guard_front(p, M["goblin"], 20)
         b.place(WITCH_HUT, *local(isl, 13, 1), search=6, label="witch hut")
+        b.place_on_dirt(GAZEBO, *local(isl, 0, -12), label="gazebo")
+        b.place_on_dirt(TREE_OF_KNOWLEDGE, *local(isl, -9, -1), label="tree of knowledge")
+        for dx, dy in ((14, -8), (-3, 14)):
+            b.place(OBELISK[gr], *local(isl, dx, dy), search=6, label="obelisk")
         # wood/ore piles for the castle + other treasure
         for j in range(4):
             b.place(RES["wood"], *local(isl, -7 + 4 * j + rng.randint(-1, 1), 2 + rng.randint(-2, 1)), search=4, label="wood")
@@ -392,7 +437,7 @@ def build():
                 if best is None or score < best[0]:
                     best = (score, x, y)
         assert best, "no coastal spot for port village"
-        cell, p = b.place(town_type(NEUTRAL, fac, False), best[1], best[2], search=0, reserve_front=False, label="port village")
+        cell, p = b.place(town_type(NEUTRAL, fac, False), best[1], best[2], search=0, label="port village")
         m.add_extra_record(cell, town_record(NEUTRAL, fac, False, isl["port"],
                                              army=[(M["swordsman"] if fac == KNIGHT else M["orc"], 8 if isl.get("weak_port") else 12),
                                                    (M["elf"], 6 if isl.get("weak_port") else 10)]))
@@ -402,21 +447,32 @@ def build():
         summary[isl["town"]] = s
 
     # ---------- central island
+    # volcano ring around Dragonhold: two gates, north (100 red dragons) and south (100 green dragons)
+    band = {(x, y) for y in range(N) for x in range(N)
+            if RING_IN <= ring_d(x, y) <= RING_OUT and b.ground(x, y) == LAVA and not in_gate(x, y)}
+    gate_zone = {(x, y) for (x, y) in [(xx, yy) for yy in range(N) for xx in range(N)]
+                 if in_gate(x, y) and RING_IN - 1 <= ring_d(x, y) <= RING_OUT + 1}
+    fill_ring(b, band, gate_zone)
+    north = b.monster(M["red_dragon"], 100, RC[0], RC[1] - 9, search=0, label="north gate")
+    south = b.monster(M["green_dragon"], 100, RC[0], RC[1] + 9, search=0, label="south gate")
+    summary["gates"] = (north, south)
     # boss: neutral Warlock castle, no hero, 5 x 20 black dragons
-    cell, boss = b.place(town_type(NEUTRAL, WARLOCK, True), 72, 72, search=2, label="boss castle")
+    cell, boss = b.place(town_type(NEUTRAL, WARLOCK, True), 72, 72, search=0, label="boss castle")
     m.add_extra_record(cell, town_record(NEUTRAL, WARLOCK, True, "Dragonhold", army=[(M["black_dragon"], 20)] * 5))
     summary["boss"] = boss
-    cell, barb = b.place(town_type(NEUTRAL, BARBARIAN, True), 57, 71, search=4, label="barbarian castle")
+    # inside the ring: two top artifacts behind strong guards, a gazebo and a tree of knowledge
+    for dx in (-5, 5):
+        _, p = b.place(ART_MAJOR, RC[0] + dx, RC[1] + 4, search=2, label="boss artifact")
+        b.monster(M["titan"] if dx < 0 else M["bone_dragon"], 6, p[0], p[1] + 1, search=2)
+    b.place(GAZEBO, RC[0] - 4, RC[1] - 4, search=2, label="gazebo")
+    b.place(TREE_OF_KNOWLEDGE, RC[0] + 5, RC[1] - 3, search=2, label="tree of knowledge")
+    cell, barb = b.place(town_type(NEUTRAL, BARBARIAN, True), 57, 71, search=5, label="barbarian castle")
     m.add_extra_record(cell, town_record(NEUTRAL, BARBARIAN, True, "Orcrest",
                                          army=[(M["orc"], 30), (M["wolf"], 15), (M["ogre"], 10), (M["troll"], 6), (M["cyclops"], 3)]))
-    cell, necr = b.place(town_type(NEUTRAL, NECRO, True), 88, 71, search=4, label="necromancer castle")
+    cell, necr = b.place(town_type(NEUTRAL, NECRO, True), 89, 71, search=5, label="necromancer castle")
     m.add_extra_record(cell, town_record(NEUTRAL, NECRO, True, "Gravemoor",
                                          army=[(M["skeleton"], 40), (M["zombie"], 20), (M["mummy"], 10), (M["vampire"], 6), (M["lich"], 4)]))
     summary["barbarian"], summary["necro"] = barb, necr
-    # two top artifacts next to the boss, behind strong guards
-    for dx in (-6, 6):
-        _, p = b.place(ART_MAJOR, 72 + dx, 76, search=3, label="boss artifact")
-        b.monster(M["titan"] if dx < 0 else M["bone_dragon"], 6, p[0], p[1] + 1, search=2)
     # missing level-6 resources: 2 of each
     centre_mines = [
         (CRYSTAL, 62, 58), (CRYSTAL, 82, 88),
@@ -431,10 +487,13 @@ def build():
         ti = ALCH_LAB_ANY if r == "mercury" else MINE_BASE[gr] + r
         _, p = b.place(ti, x, y, search=6, label="centre mine")
         b.guard_front(p, guards[j % 4], 4 + (j % 3))
-    for j in range(6):
-        b.place(ART_MINOR if j % 2 else ART_MAJOR, 60 + 5 * j, 64 + (j % 2) * 15, search=5, label="artifact")
-    for j in range(6):
-        b.monster(rng.choice([M["red_dragon"], M["titan"], M["bone_dragon"]]), 3, 62 + 4 * j, 80 - (j % 2) * 16, search=4)
+    b.place(WITCH_HUT, 60, 82, search=6, label="witch hut")
+    b.place(OBELISK[SWAMP], 56, 62, search=6, label="obelisk")
+    b.place(OBELISK[DESERT], 87, 80, search=6, label="obelisk")
+    for j, (x, y) in enumerate(((57, 64), (86, 63), (56, 79), (86, 85), (64, 84), (80, 59))):
+        b.place(ART_MINOR if j % 2 else ART_MAJOR, x, y, search=5, label="artifact")
+    for x, y in ((60, 66), (84, 66), (60, 77), (84, 77), (58, 86), (88, 58)):
+        b.monster(rng.choice([M["red_dragon"], M["titan"], M["bone_dragon"]]), 3, x, y, search=4)
 
     # ---------- sea
     for x, y in ((22, 72), (121, 72)):
@@ -463,8 +522,76 @@ def build():
         except RuntimeError:
             pass
 
+    add_events(m)
     decorate(b)
     return b, summary
+
+
+STORY = ("The Blue Sea was home to peaceful lands: six free countries lived and prospered. "
+         "But the central island has fallen to an invading dragon horde. "
+         "Conquer the central island, or the dragons will crush you!")
+PLAYERS = (BLUE, GREEN, RED, YELLOW)
+# weekly dragon raids, cycling green -> red -> black; resources: wood, mercury, ore, sulfur, crystal, gems, gold
+RAIDS = [
+    ("Green dragons from the central island raid your coast and burn your stores!", [-5, 0, -5, 0, 0, 0, -1000]),
+    ("Red dragons sweep over your lands. Fields and mines are in flames!", [-5, -2, -5, -2, -2, -2, -2000]),
+    ("Black dragons darken the sky. The treasury is looted!", [-10, -3, -10, -3, -3, -3, -3000]),
+]
+
+
+def add_events(m):
+    m.add_time_event(STORY, first_day=1, colors=PLAYERS)
+    for k, (msg, res) in enumerate(RAIDS):
+        m.add_time_event(msg, first_day=8 + 7 * k, repeat=7 * len(RAIDS), colors=PLAYERS, resources=res)
+
+
+def fill_ring(b, band, gate_zone):
+    """Cover every band tile with volcanoes, lava pools, craters and lava mountains."""
+    m = b.m
+    taken = set()
+    cells = sorted(band)
+    rng.shuffle(cells)
+    blockers = {}
+    for ti in RING_OBSTACLES + RING_FILL:
+        t = CAT[ti]
+        blk = [(c, r) for r in range(6) for c in range(8)
+               if t["frames"][r * 8 + c] != 255 and not t["shadowRows"][r][c] and not t["overlayRows"][r][c]]
+        allc = [(c, r) for r in range(6) for c in range(8) if t["frames"][r * 8 + c] != 255]
+        blockers[ti] = (blk, allc)
+    big = sorted(RING_OBSTACLES, key=lambda ti: -len(blockers[ti][0]))
+    for tries in (big, RING_FILL):
+        for x, y in cells:
+            if (x, y) in taken:
+                continue
+            opts = tries[:]
+            if tries is big:
+                rng.shuffle(opts)
+                opts.sort(key=lambda ti: -len(blockers[ti][0]))
+            for ti in opts:
+                blk, allc = blockers[ti]
+                done = False
+                for bc, br in blk:
+                    ax, ay = x + 7 - bc, y + 5 - br
+                    cov = [(ax - 7 + c, ay - 5 + r) for c, r in blk]
+                    if not all(p in band and p not in taken for p in cov):
+                        continue
+                    every = [(ax - 7 + c, ay - 5 + r) for c, r in allc]
+                    if any(p in b.reserved and p not in band for p in every):
+                        continue
+                    if not m.can_place(ti, ax, ay):
+                        continue
+                    m.place(ti, ax, ay)
+                    taken.update(cov)
+                    b.reserved.update(cov)
+                    done = True
+                    break
+                if done:
+                    break
+    left = band - taken
+    b.log.append(f"volcano ring: {len(taken)} tiles blocked, {len(left)} open")
+    # also keep the ring free of later decoration
+    b.reserved.update(band)
+    return left
 
 
 def decorate(b):
@@ -519,11 +646,13 @@ def check_reachability(b, summary):
     """BFS on land: every action object on a player island must be reachable from the hero,
     and every action object on the central island from its shore (where boats land)."""
     m = b.m
-    blk = blocked_cells(m)
+    monster_t = MO["MAP_OBJECT_MONSTER"] | ACTION
+    # monsters can be beaten, so they do not block a path
+    blk = {p for p in blocked_cells(m) if m.cell(*p).trigger != monster_t}
     land = lambda x, y: 0 <= x < N and 0 <= y < N and G2T[m.cell(x, y).terrain] != 0
     issues = []
 
-    def flood(starts):
+    def flood(starts, extra_blk=()):
         seen = set(starts)
         dq = deque(starts)
         while dq:
@@ -531,7 +660,7 @@ def check_reachability(b, summary):
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
                     nx, ny = x + dx, y + dy
-                    if (nx, ny) in seen or not land(nx, ny) or (nx, ny) in blk:
+                    if (nx, ny) in seen or not land(nx, ny) or (nx, ny) in blk or (nx, ny) in extra_blk:
                         continue
                     seen.add((nx, ny))
                     dq.append((nx, ny))
@@ -553,6 +682,15 @@ def check_reachability(b, summary):
              and any(not land(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
     summary["centre landing tiles"] = len(shore)
     audit("centre", flood(shore), 72, 72, 26)
+    # the volcano ring: with both gate stacks standing, Dragonhold must be out of reach
+    bx, by = summary["boss"]
+    # (a monster attacks anyone stepping next to it, so its 8 neighbours count as blocked too)
+    zoc = {(gx + dx, gy + dy) for gx, gy in summary["gates"] for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+    sealed = flood([p for p in shore if p not in zoc], extra_blk=zoc)
+    inner = [(x, y) for y in range(N) for x in range(N) if ring_d(x, y) < RING_IN - 0.5 and land(x, y)]
+    leaks = [p for p in inner if p in sealed]
+    if leaks:
+        issues.append(("volcano ring leaks", leaks[:5]))
     return issues
 
 
@@ -579,9 +717,9 @@ def header():
     h[57] = 0
     name = b"Four Islands"
     h[58:58 + len(name)] = name
-    desc = (b"Four rival islands in the corners: Knights, Sorceresses, Wizards and Warlocks. "
-            b"Upgrade your village, take the port, build a shipyard and sail for the central island, "
-            b"where the missing mines and the dragon fortress await.")
+    desc = (b"Six free countries prospered in the Blue Sea, until dragons seized the central island. "
+            b"Upgrade your village, take the port, build a shipyard and sail to the centre: "
+            b"conquer it, or the dragons will crush you.")
     h[118:118 + len(desc)] = desc[:299]
     return bytes(h)
 

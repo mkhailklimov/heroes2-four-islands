@@ -37,10 +37,15 @@ The output is deterministic (`SEED` in `build_map.py`). Change the seed to get d
    - It reserves the object's tiles and the 3 tiles in front of its entrance, so nothing blocks a door.
    - Guards go diagonally in front of what they guard.
 4. **Port village.** It goes on the coastal spot closest to the map centre where the land around it is solid and the 3 water tiles at y + 2 allow a shipyard.
-5. **Centre and sea.** These use fixed coordinates; see the code.
+5. **Centre and sea.**
+   - `fill_ring()` covers the lava band around Dragonhold with volcanoes, lava pools, craters and lava mountains, leaving the two gate columns open. The gate dragons go in after it.
+   - Everything else uses fixed coordinates; see the code.
+   - `add_events()` writes the day-1 story and the weekly raids (`STORY`, `RAIDS`).
+   - `Builder.place_on_dirt()` repaints a small dirt patch under objects drawn for grass/dirt.
 6. **Decoration.** Sparse trees, rocks and mountains, kept away from action objects.
 7. **Checks.**
-   - `check_reachability()` walks the land from each hero and from the centre island's shore. Every action object must be reachable.
+   - `check_reachability()` walks the land from each hero and from the centre island's shore. Every action object must be reachable, with monsters counted as passable because they can be beaten.
+   - It then blocks the two gate dragons and the tiles next to them, and checks that the inside of the volcano ring can't be reached.
    - The script prints any issues and the number of ground-transition fallbacks. Both should be empty or 0.
 
 ## Changing things

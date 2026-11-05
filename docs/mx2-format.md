@@ -183,6 +183,25 @@ Secondary skill ids:
 | 12 | Necromancy |
 | 13 | Estates |
 
+## Time event record (49 bytes + message)
+
+The extra-record indices of time events are listed right after the obelisk count, as u16 values (`header[419]` of them). Fields come from `EventExtra` in the decomp's `gameTypes.h`. The game checks them in `game::CheckForTimeEvent`: an event fires on `firstDay`, and every `repeatInterval` days after it.
+
+| Offset | Field |
+|---|---|
+| 0 | Is map event (0 for a time event) |
+| 1–28 | Resources (7 × i32: wood, mercury, ore, sulfur, crystal, gems, gold; can be negative) |
+| 29 | Artifact (i16, −1 none) |
+| 31 | Applies to computer |
+| 32 | Cancel after visit |
+| 33 | First day (u16) |
+| 35 | Repeat interval (u16, 0 = once) |
+| 37 | Active |
+| 38 / 40 | x / y (u16, unused for time events) |
+| 42 | Applies to human |
+| 43–48 | Colours it applies to |
+| 49… | Message, zero-terminated |
+
 ## Object catalogue
 
 The editor's `gOverlayTypes` table has 956 entries, extracted to `tools/h2data.json`. Each object sits on an 8×6 grid anchored at the bottom-right cell (7,5). The grid holds bit masks for:

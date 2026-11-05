@@ -19,10 +19,11 @@ for i, t in enumerate(m["tiles"]):
     name = mp2read.OBJ.get(t["otype"], "")
     if "TREES" in name: c = (20, 90, 30)
     if "MOUNTAINS" in name or "ROCK" in name: c = (100, 100, 100)
+    if any(k in name for k in ("VOLCANO", "LAVAPOOL", "LAVA_POOL", "CRATER")): c = (150, 30, 20)
     if name.startswith("OBJ_NON_ACTION"): c = tuple(v // 2 for v in c)
     d.rectangle([x * S, y * S, x * S + S - 1, y * S + S - 1], fill=c)
     mk = MARK.get(name)
-    if mk is None and name.startswith("OBJ_") and not name.startswith("OBJ_NON") and name not in ("OBJ_NONE", "OBJ_COAST", "OBJ_TREES", "OBJ_MOUNTAINS", "OBJ_ROCK"):
+    if mk is None and t["otype"] & 0x80 and not name.startswith("OBJ_NON") and name not in ("OBJ_NONE", "OBJ_COAST", "OBJ_TREES", "OBJ_MOUNTAINS", "OBJ_ROCK"):
         mk = (255, 255, 255)
     if mk:
         d.ellipse([x * S, y * S, x * S + S - 1, y * S + S - 1], fill=mk)
