@@ -1,126 +1,44 @@
-# «Четыре острова» — план карты для Heroes of Might and Magic II
+# Four Islands: a custom map for Heroes of Might and Magic II
 
-Размер: **XL, 144×144**, без подземелья. Игроков: 4 (любые человек/ИИ). Команды: нет (все против всех).
-Условие победы: стандартное (захватить всё) — опционально «захватить замок-босс в центре».
+![Four Islands map overview](preview.png)
 
-## 1. Что в HoMM2 нельзя сделать «как в ТЗ» и чем заменяем
+*Four Islands* is an XL (144×144) map for the original **Heroes of Might and Magic II: The Price of Loyalty** (Gold Edition, as sold by Ubisoft and GOG).
 
-| Идея из ТЗ | Ограничение движка | Решение на карте |
-|---|---|---|
-| Фракция «Принцессы» | В HoMM2 такой нет | **Волшебница (Sorceress)**: феи, эльфы, единороги, фениксы |
-| Апгрейд деревни в замок «за камни» | Замок строится за **5000 золота + 20 дерева + 20 руды** | «Камни» = руда. На острове рядом с деревней ставим кучки руды и рудник |
-| Воронка убивает по 1 юниту в каждом отряде | Встроенный водоворот режет **только самый слабый отряд** (в оригинале примерно наполовину) и это не настраивается | Ставим обычные водовороты. Точное «−1 в каждом отряде» в HoMM2 сделать нельзя |
-| Супер-герой: один первичный навык 20, остальные 0 | Оригинальный редактор не даёт править первичные навыки | Заменено на 4 вторичных навыка «Эксперт», см. §4 |
-| «Карты с морями» на севере и юге | Объекта «карта моря» нет | **Хижина мага + 3–4 Ока мага** (открывают море) + **Обсерватория** на островке |
-| Медленная грязь в центре | «Грязь» (Dirt) в HoMM2 обычная по скорости | Запад центра = **Болото** (175% стоимость хода), восток = **Пустыня** (200%) |
-| Драконы в замке-боссе не восстанавливаются | У нейтрального замка без героя гарнизон не прирастает, потери сохраняются | Работает как задумано. Отступивший герой оставляет 95 драконов |
+> Six free countries prospered in the Blue Sea, until dragons seized the central island. Upgrade your village, take the port, build a shipyard and sail to the centre: conquer it, or the dragons will crush you.
 
-## 2. Общая схема
+## What's on the map
 
-```
-x→ 0                    72                   143
-y  +--------------------------------------------+
-0  | ВАРЛОК (лава)    ~ Север: Хижина мага ~   РЫЦАРЬ (снег) |
-   |  [x4–44,y4–44]      Обсерватория      [x100–140,y4–44]|
-   |        ↘ порт-деревня          порт-деревня ↙       |
-72 | ◎ВОРОНКА З   [ ЦЕНТР x52–92, y52–92 ]   ВОРОНКА В◎ |
-   |              болото | пустыня                       |
-   |        ↗ порт-деревня          порт-деревня ↖       |
-   | ВОЛШЕБНИЦА (трава)  ~ Юг: Хижина мага ~  ВИЗАРД (глина/Dirt) |
-143|  [x4–44,y100–140]                    [x100–140,y100–140]|
-   +--------------------------------------------+
-```
+- **Four home islands**, one in each corner: Warlock (lava, NW), Knight (snow, NE), Sorceress (grass, SW) and Wizard (dirt, SE). You start in a village and have to grow it into a castle.
+- **Seven mines per island**, but each island lacks one rare resource. Trade for it, or fight for it in the centre.
+- **No land route between islands.** Take your island's port town, build a shipyard and cross the sea. Two whirlpools link the west and east seas.
+- **A prison with a super-hero** on every island: no army, but four Expert secondary skills.
+- **The central island** holds the missing rare-resource mines, two computer-held castles (Barbarian and Necromancer) and **Dragonhold**: a castle guarded by 100 Black Dragons, behind a ring of volcanoes whose two gates are held by dragons.
+- **Dragon raids**: every week the dragons burn part of your stores until someone takes the centre.
+- Rumours in the taverns, a story event on day 1 and treasure in the sea.
 
-Рыцарь и Варлок на севере, Волшебница и Визард на юге. Остальное — море (Water), у островов песчаный берег (Beach).
+Players: Blue (Knight), Green (Sorceress), Red (Warlock) and Yellow (Wizard) can be human or computer. Orange (Barbarian) and Purple (Necromancer) are computer only.
 
-**Земля Варлока — снег, как в ТЗ, или лава?** В ТЗ снег стоит и у Рыцаря, и у Варлока; похоже на опечатку. В плане Варлок на **лаве**, это легко поменять.
+## How to install
 
-## 3. Угловой остров (шаблон; повторить ×4 зеркально)
+1. Download **[FOURISL.MX2](FOURISL.MX2)**: open the file on GitHub and click the **Download raw file** button.
+2. Copy it into the `MAPS` folder of your game:
+   - **Ubisoft Connect:** `C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games\Heroes of Might and Magic 2\MAPS`
+   - **GOG:** `C:\GOG Games\Heroes of Might and Magic 2\MAPS` (or wherever you installed the game)
+3. Start the game and choose **New Game → Standard Game** (Price of Loyalty), then pick the map size **Extra Large** or **All**. Choose **Four Islands** from the list.
 
-Координаты для СЗ острова (Варлок). Для остальных отразить по осям: Рыцарь x→143−x; Волшебница y→143−y; Визард x→143−x, y→143−y.
+The map uses the `.MX2` format, so it needs the Price of Loyalty expansion. Every edition sold today includes it. It also loads in [fheroes2](https://github.com/ihhub/fheroes2).
 
-| Объект | Координаты | Настройки |
-|---|---|---|
-| Стартовая деревня игрока | (18,18) | Town без замка, владелец — игрок, построек минимум (таверна, колодец) |
-| Стартовый герой | (20,19) | Класс фракции, 2 отряда 1–2 уровня (напр. 15 + 8) |
-| Бесплатные жилища (2 шт.) | (14,22), (23,14) | Варлок: Пещера (кентавры). Рыцарь: Хижина крестьян + Дом лучников. Волшебница: Домик на дереве (феи) + Хижина гномов. Визард: Нора полуросликов + (2-я) Хижина гномов |
-| Тюрьма с супер-героем | (8,30) | Охрана: 1 отряд средних нейтралов. Герой — см. §4 |
-| Лесопилка + рудник | (12,10), (28,10) | Охрана слабая |
-| Шахта золота | (30,26) | Охрана средняя |
-| 2 «чужие» шахты (не 6-го уровня своей фракции) | (10,38), (36,6) | См. §5 |
-| Мельница (Windmill) | (26,34) | Раз в неделю случайный редкий ресурс — тот самый «рандомный» шанс получить свой ресурс |
-| Водяная мельница | (6,16) | Золото |
-| Кучки дерева/руды ×6 | разбросать у деревни | Хватит на замок за 1–2 недели |
-| Сундуки ×3, малый артефакт ×1 | | |
-| Порт-деревня (нейтральная) | (40,40), на берегу к центру | Town без замка, гарнизон ~ 2 отряда 3 уровня. После захвата: замок → верфь (2000 + 20 дерева) |
+### Как установить (по-русски)
 
-Единственный выход с острова — по морю через верфь порт-деревни. Наземного пути к соседям нет.
+Скачайте [FOURISL.MX2](FOURISL.MX2) и положите в папку `MAPS` игры (для Ubisoft: `C:\Program Files (x86)\Ubisoft\Ubisoft Game Launcher\games\Heroes of Might and Magic 2\MAPS`). В игре: **New Game → Standard Game**, размер карты **Extra Large**, карта **Four Islands**.
 
-## 4. Тюрьмы (супер-герои)
+## How the map was made
 
-Карта делается в **оригинальном редакторе**. Первичные навыки там не задаются, поэтому силу героя дают **вторичные навыки на уровне «Эксперт»**. Они встроены в героя, и передать их другому герою нельзя. Армия пустая, опыт 0.
+The first version was generated by a Python script that writes the original editor's file format (`tools/build_map.py`). It was then finished by hand in the original map editor. The file in this repository is the hand-finished map, so rerunning the generator would overwrite those changes.
 
-| Остров | Класс героя | Вторичные навыки (все «Эксперт») | Роль |
-|---|---|---|---|
-| Рыцарь | Рыцарь | Лидерство, Удача, Стрельба, Баллистика | Ударник и штурм замков |
-| Волшебница | Волшебница | Мудрость, Мистицизм, Орлиный глаз, Удача | Боевой маг |
-| Визард | Визард | Мудрость, Мистицизм, Навигация, Разведка | Маг-разведчик для моря |
-| Варлок | Варлок | Лидерство, Дипломатия, Логистика, Поиск пути | Полководец, собирает армию |
+- [docs/plan-ru.md](docs/plan-ru.md): the original design plan (in Russian).
+- [docs/map-guide.md](docs/map-guide.md) and [docs/objects.md](docs/objects.md): what the generator placed. The hand-finished map differs in places.
+- [docs/generator.md](docs/generator.md): how to run the generator.
+- [docs/mx2-format.md](docs/mx2-format.md): notes on the MP2/MX2 file format.
 
-В редакторе: свойства героя в тюрьме → включить настройку вторичных навыков → выбрать навык и уровень.
-
-## 5. Ресурсы для 6-го уровня (дефицит)
-
-| Фракция | Не хватает (нет шахты на острове) |
-|---|---|
-| Рыцарь | Кристаллы |
-| Волшебница | Ртуть |
-| Визард | Самоцветы |
-| Варлок | Сера |
-
-На каждом острове 2 «чужие» шахты из этого списка (кроме своей), чтобы было что менять на рынке. Свой ресурс — только мельница или центр.
-
-## 6. Море
-
-| Зона | Что ставим |
-|---|---|
-| Север (x60–84, y4–20) | Островок: **Хижина мага** (72,10) + **Обсерватория**; **Ока мага** в 4 точках моря; Маяк |
-| Юг (x60–84, y123–139) | То же, отражённое |
-| Запад (24,72) и Восток (119,72) | **Водовороты**, связаны только друг с другом (других на карте нет) |
-| По всему морю | Обломки (Flotsam: дерево/золото) ×16, Морские сундуки ×10, Выжившие после кораблекрушения (артефакт) ×4, Бутылки ×4, Буи ×4 |
-
-## 7. Центральный остров (x52–92, y52–92)
-
-- Рельеф: запад — **болото**, восток — **пустыня**, кромка — песок.
-- **Варвары (запад)**: нейтральный замок (58,72), гарнизон 3 отряда (орки/волки/огры).
-- **Некромант (восток)**: нейтральный замок (86,72), гарнизон (скелеты/зомби/мумии).
-- **Шахты дефицита** по 2 каждого: кристаллы (62,60),(62,84); ртуть (82,60),(82,84); самоцветы (66,56),(78,88); сера (78,56),(66,88). Охрана сильная (драконы зелёные/гидры и т. п.).
-- **Босс**: замок Варлока без героя (72,72), гарнизон **5 отрядов × 20 Чёрных драконов**, жилище драконов не строить. Рядом 2 артефакта высшего класса за охраной.
-- 4 причала (пустые клетки берега) у середины каждой стороны острова.
-
-## 8. Асимметрия (небольшие отличия)
-
-- Рыцарь: тюрьма на 3 клетки дальше от деревни, зато +1 сундук.
-- Волшебница: вторая мельница вместо водяной.
-- Визард: порт-деревня с гарнизоном слабее, но дальше от центра.
-- Варлок: лишний рудник, на 1 кучу золота меньше.
-- В море Морские сундуки раскиданы не строго зеркально.
-
-## 9. Как собрать и поделиться
-
-1. **Редактор**: оригинальный редактор HoMM2 (editor2). Карта сохраняется в формате .MX2 и открывается в версии от Ubisoft.
-2. Сначала рельеф (вода → острова → песок → болото/пустыня), потом города, шахты, объекты, охрана.
-3. Положить файл в папку MAPS игры. Через Ubisoft Connect карты не загрузить, делиться можно через фан-сайты (например, сообщества fheroes2 и HoMM2 map сайты) или просто файлом.
-
-Замечание: ИИ в HoMM2 плохо ходит по морю и через водовороты, против ИИ карта будет легче, чем против людей.
-
-## 10. Готовая карта и документация
-
-- **[FOURISL.MX2](FOURISL.MX2)** — сгенерированная карта (первый набросок, ещё не проверена в игре). Положить в папку `MAPS` игры и выбрать в списке карт XL.
-- **[preview.png](preview.png)** — схема карты.
-- **[docs/map-guide.md](docs/map-guide.md)** — что на карте: игроки, острова, тюрьмы, центр, море, отличия от плана, открытые вопросы.
-- **[docs/objects.md](docs/objects.md)** — полный список объектов с координатами (генерируется вместе с картой).
-- **[docs/generator.md](docs/generator.md)** — как устроен и как пересобрать генератор.
-- **[docs/mx2-format.md](docs/mx2-format.md)** — заметки о формате файла MP2/MX2.
-
-Источники: [homm2-decomp](https://github.com/sushi-shi/homm2-decomp) (CC0) для формата и каталога объектов; логика переходов земли портирована из редактора fheroes2 (GPL-2.0).
+Sources: [homm2-decomp](https://github.com/sushi-shi/homm2-decomp) (CC0) for the file format and object catalogue. The terrain transition logic was ported from the fheroes2 editor (GPL-2.0).
